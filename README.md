@@ -1,0 +1,74 @@
+# DKSplit
+
+String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
+
+## About
+
+DKSplit is developed by [ABTdomain](https://ABTdomain.com), originally built for [DomainKits](https://domainkits.com) - a domain platform.
+
+The model is trained on millions of labeled samples covering domain names, brand names, tech terms, and multi-language phrases. It uses a BiLSTM-CRF architecture (384 embedding, 768 hidden, 3 layers) and is exported to ONNX format with INT8 quantization for fast, lightweight inference.
+
+Originally designed for domain name segmentation, but works well on:
+- Brand names: `chatgptlogin` → `chatgpt login`
+- Tech terms: `kubernetescluster` → `kubernetes cluster`
+- Multi-language phrases: `mercibeaucoup` → `merci beaucoup`
+
+## Install
+```bash
+pip install dksplit
+```
+
+## Usage
+```python
+import dksplit
+
+# Single
+dksplit.split("chatgptlogin")
+# ['chatgpt', 'login']
+
+# Batch
+dksplit.split_batch(["openaikey", "microsoftoffice"])
+# [['openai', 'key'], ['microsoft', 'office']]
+```
+
+## Comparison
+
+| Input | DKSplit | WordNinja |
+|-------|---------|-----------|
+| chatgptlogin | chatgpt login | chat gp t login |
+| kubernetescluster | kubernetes cluster | ku berne tes cluster |
+## Features
+
+- **High-Fidelity Segmentation:** 95%+ accuracy on a diverse range of inputs, from technical identifiers to concatenated common phrases.
+- **Robust Brand/Phrase Handling:** Accurately segments new or ambiguous cases, including modern brand names and multi-word phrases (e.g., in English, German, French, etc.).
+- INT8 quantized, 9MB model size
+- ~800/s single, ~1700/s batch
+- **Continuous Improvement:** The model is subject to periodic updates on the GitHub repository to incorporate new vocabulary and address discovered edge cases. 
+
+## Requirements
+
+- Python >= 3.8
+- numpy
+- onnxruntime
+
+## Limitations
+
+
+- **Supported Characters:** Input must be composed of `a-z` and `0-9` only. All characters are automatically converted to lowercase before processing. (Non-alphanumeric characters, spaces, and special symbols are not supported.)
+- **Maximum Length:** The model is optimized for short identifiers and phrases, supporting a maximum input length of **64 characters**.
+- **Script Support:** Only **Latin script** (including Romanized forms of CJK/Arabic) is supported. Non-Latin scripts (e.g., 汉字, かな, 한글, العربية) will produce unpredictable results.
+- **Ambiguity/New Entities:** While highly accurate, the model may occasionally mis-segment very new or highly specialized technical entities (e.g., `cloud` `flare` `status` instead of `cloudflare` `status`).
+- **Accuracy Target:** The model is optimized for high speed and low size (9MB). While its accuracy is **high**, it is not designed to match the near-perfect accuracy of slow, high-cost large language models (LLMs).
+
+**Tip:** Pre/post-processing with a custom dictionary can improve accuracy for specialized terms.
+
+## Links
+
+- Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
+- **GitHub Repository:** [github.com/ABTdomain/dksplit](https://github.com/ABTdomain/dksplit)
+- PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
+- Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
+
+## License
+
+MIT
