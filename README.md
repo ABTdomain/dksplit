@@ -1,6 +1,9 @@
 # DKSplit
+[![PyPI](https://img.shields.io/pypi/v/dksplit)](https://pypi.org/project/dksplit/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
+Word segmentation library for concatenated text. Split domain names, brand names, and phrases into words.
+
 
 ## About
 
