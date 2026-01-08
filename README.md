@@ -40,6 +40,23 @@ dksplit.split_batch(["openaikey", "microsoftoffice"])
 |-------|---------|-----------|
 | chatgptlogin | chatgpt login | chat gp t login |
 | kubernetescluster | kubernetes cluster | ku berne tes cluster |
+
+## Real World Benchmark
+
+Tested on [Majestic Million](https://majestic.com/reports/majestic-million) domains:
+
+| Input | Output |
+|-------|--------|
+| amitriptylineinfo | amitriptyline info |
+| autoriteprotectiondonnees | autorite protection donnees |
+| mountaingoatsoftware | mountain goat software |
+| psychologytoday | psychology today |
+| affordablecollegesonline | affordable colleges online |
+| stephenwolfram | stephen wolfram |
+| ralphlauren | ralphlauren |
+| m12ivermectin | m12i vermectin |
+
+
 ## Features
 
 - **High-Fidelity Segmentation:** 95%+ accuracy on a diverse range of inputs, from technical identifiers to concatenated common phrases.
@@ -67,8 +84,10 @@ dksplit.split_batch(["openaikey", "microsoftoffice"])
 
 ## Links
 
-- Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
-- **GitHub Repository:** [github.com/ABTdomain/dksplit](https://github.com/ABTdomain/dksplit)
+- Website: [ABTdomain.com](https://ABTdomain.com)
+- Use Case: [domainkits.com](https://domainkits.com)
+- Go version: [github.com/ABTdomain/dksplit-go](https://github.com/ABTdomain/dksplit-go)
+- Documentation: [dksplit.readthedocs.io](https://dksplit.readthedocs.io)
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
