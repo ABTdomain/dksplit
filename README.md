@@ -54,7 +54,6 @@ Tested on [Majestic Million](https://majestic.com/reports/majestic-million) doma
 | affordablecollegesonline | affordable colleges online |
 | stephenwolfram | stephen wolfram |
 | ralphlauren | ralphlauren |
-| m12ivermectin | m12i vermectin |
 
 
 ## Features
@@ -64,6 +63,7 @@ Tested on [Majestic Million](https://majestic.com/reports/majestic-million) doma
 - INT8 quantized, 9MB model size
 - ~800/s single, ~1700/s batch
 - **Continuous Improvement:** The model is subject to periodic updates on the GitHub repository to incorporate new vocabulary and address discovered edge cases. 
+**Tip:** Pre/post-processing with a custom dictionary can improve accuracy for specialized terms.
 
 ## Requirements
 
@@ -80,7 +80,6 @@ Tested on [Majestic Million](https://majestic.com/reports/majestic-million) doma
 - **Ambiguity/New Entities:** While highly accurate, the model may occasionally mis-segment very new or highly specialized technical entities (e.g., `cloud` `flare` `status` instead of `cloudflare` `status`).
 - **Accuracy Target:** The model is optimized for high speed and low size (9MB). While its accuracy is **high**, it is not designed to match the near-perfect accuracy of slow, high-cost large language models (LLMs).
 
-**Tip:** Pre/post-processing with a custom dictionary can improve accuracy for specialized terms.
 
 ## Links
 
