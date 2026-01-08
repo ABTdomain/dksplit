@@ -39,6 +39,7 @@ dev = ["pytest>=7.0"]
 Homepage = "https://abtdomain.com"
 Use_Case = "https://domainkits.com"
 Repository = "https://github.com/ABTdomain/dksplit"
+Documentation = "https://dksplit.readthedocs.io"
 
 [tool.setuptools.packages.find]
 where = ["."]
