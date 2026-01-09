@@ -4,7 +4,7 @@ DKSplit test script
 
 import time
 import dksplit
-from dksplit import Splitter
+
 
 print("=" * 60)
 print("DKSplit Test")

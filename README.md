@@ -92,6 +92,13 @@ Tested on [Majestic Million](https://majestic.com/reports/majestic-million) doma
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
+## Support
+
+If you find this useful:
+- ⭐ Star this repo
+- 🐛 Report issues on [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
+
+
 ## License
 
 MIT
