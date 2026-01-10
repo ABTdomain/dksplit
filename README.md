@@ -60,7 +60,7 @@ Tested on [Majestic Million](https://majestic.com/reports/majestic-million) doma
 
 ## Features
 
-- **High-Fidelity Segmentation:** 95%+ accuracy on a diverse range of inputs, from technical identifiers to concatenated common phrases.
+- **High-Fidelity Segmentation:** high accuracy on a diverse range of inputs, from technical identifiers to concatenated common phrases.
 - **Robust Brand/Phrase Handling:** Accurately segments new or ambiguous cases, including modern brand names and multi-word phrases (e.g., in English, German, French, etc.).
 - INT8 quantized, 9MB model size
 - ~800/s single, ~1700/s batch
