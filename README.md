@@ -1,6 +1,6 @@
 # DKSplit
 
-> **v0.2.0** — Retrained model with expanded brand and name coverage. ~7% accuracy improvement on real-world domains. API unchanged — just `pip install --upgrade dksplit`.
+> **v0.2.2** — Retrained model with expanded brand and name coverage. ~7% accuracy improvement on real-world domains. API unchanged — just `pip install --upgrade dksplit`.
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -30,7 +30,7 @@ dksplit.split_batch(["openaikey", "microsoftoffice", "bitcoinprice"])
 # [['openai', 'key'], ['microsoft', 'office'], ['bitcoin', 'price']]
 ```
 
-## What's New in v0.2.0
+## What's New in v0.2.2
 
 Retrained model with significantly expanded brand and name coverage. The API is unchanged — just upgrade.
 ```
@@ -39,7 +39,7 @@ pip install --upgrade dksplit
 
 Examples of improvements:
 
-| Input | v0.1.0 | v0.2.0 |
+| Input | v0.1.0 | v0.2.2 |
 |---|---|---|
 | `cloudflarecdn` | cloud flare cdn | **cloudflare cdn** |
 | `snowdenyes` | snow den yes | **snowden yes** |
@@ -68,7 +68,7 @@ Accuracy (agreement with GPT-5.2 on 1,000 real domains):
 
 | Model | Accuracy |
 |---|---|
-| **DKSplit v0.2.0** | **80.5%** |
+| **DKSplit v0.2.2** | **80.5%** |
 | WordSegment | 59.1% |
 | WordNinja | 47.6% |
 
@@ -78,7 +78,7 @@ DKSplit outperforms WordSegment by **21 percentage points** and WordNinja by **3
 
 ### Comparison
 
-| Input | DKSplit v0.2.0 | WordSegment | WordNinja |
+| Input | DKSplit v0.2.2 | WordSegment | WordNinja |
 |---|---|---|---|
 | `chatgptlogin` | **chatgpt login** | chat gpt login | chat gp t login |
 | `cloudflarecdn` | **cloudflare cdn** | cloud flare cdn | cloud flare cd n |
