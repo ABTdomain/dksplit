@@ -1,6 +1,6 @@
 # DKSplit
 
-> **v0.2.0** — Retrained model with expanded brand and name coverage. Accuracy improved from 75.4% to 80.5% on real-world domains. API unchanged — just `pip install --upgrade dksplit`.
+> **v0.2.0** — Retrained model with expanded brand and name coverage. ~7% accuracy improvement on real-world domains. API unchanged — just `pip install --upgrade dksplit`.
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -37,13 +37,6 @@ Retrained model with significantly expanded brand and name coverage. The API is 
 pip install --upgrade dksplit
 ```
 
-Accuracy on 1,000 real domains (details in [Benchmark](#benchmark)):
-
-| Version | Accuracy |
-|---|---|
-| **v0.2.0** | **80.5%** |
-| v0.1.0 | 75.4% |
-
 Examples of improvements:
 
 | Input | v0.1.0 | v0.2.0 |
@@ -67,21 +60,19 @@ benchmark/
 ```
 pip install dksplit wordsegment wordninja
 python benchmark/run_benchmark.py
-
 ```
 
 ### Results
 
-| Model | Parameters | Accuracy | Speed | Size | Cost |
-|---|---|---|---|---|---|
-| GPT-5.2 | Trillion+ | reference | ~2/s | — | $0.19/1K |
-| **DKSplit v0.2.0** | **9.47M** | **80.5%** | **508/s** | **9 MB** | **Free** |
-| WordSegment | — | 59.1% | 1,008/s | — | Free |
-| WordNinja | — | 47.6% | 9,082/s | — | Free |
+Accuracy (agreement with GPT-5.2 on 1,000 real domains):
+
+| Model | Accuracy |
+|---|---|
+| **DKSplit v0.2.0** | **80.5%** |
+| WordSegment | 59.1% |
+| WordNinja | 47.6% |
 
 DKSplit outperforms WordSegment by **21 percentage points** and WordNinja by **33 percentage points**.
-
-Compared to GPT-5.2, DKSplit achieves **80.5% agreement** while running **250x faster** at **zero cost** — making it practical for bulk processing where calling an LLM on every input is not feasible.
 
 > **Note:** The remaining ~20% disagreement with GPT-5.2 largely comes from rare languages, invented words, and genuinely ambiguous cases (e.g., is `christianalucas` → `christiana lucas` or `christian a lucas`?). On standard English inputs, agreement is significantly higher.
 
@@ -117,11 +108,9 @@ At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding i
 
 ## Features
 
-- **High accuracy:** 80.5% agreement with GPT-5.2 on real domains, 21pp above WordSegment
-- **Fast:** 500+ segmentations/second on CPU
-- **Lightweight:** 9 MB model, minimal dependencies (numpy + onnxruntime)
 - **Brand-aware:** Recognizes thousands of brands, tech products, and proper nouns
 - **Multilingual:** Handles English, French, German, Spanish, and romanized text
+- **Lightweight:** 9 MB model, minimal dependencies (numpy + onnxruntime)
 - **Offline:** No API keys, no internet required
 
 ## Limitations
