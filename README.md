@@ -99,8 +99,8 @@ DKSplit treats segmentation as a sequence labeling task.
 
 The training data includes:
 - LLM-labeled domain name segmentations
-- Brand names sourced from Wikidata (companies, software, websites, games, cryptocurrencies)
-- Global personal name combinations
+- Brand names
+- Personal name combinations
 - Multilingual phrases (English, French, German, Spanish, and more)
 - Tech product names and terminology
 
