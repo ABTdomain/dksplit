@@ -95,7 +95,7 @@ DKSplit outperforms WordSegment by **21 percentage points** and WordNinja by **3
 
 ## How It Works
 
-DKSplit treats segmentation as a sequence labeling task. Each character receives a label: `1` (start of a new word) or `0` (continuation). A bidirectional LSTM reads the full string in both directions, and a CRF layer enforces valid transitions between labels.
+DKSplit treats segmentation as a sequence labeling task.
 
 The training data includes:
 - LLM-labeled domain name segmentations
