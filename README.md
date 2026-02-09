@@ -1,5 +1,7 @@
 # DKSplit
 
+> **v0.2.0** — Retrained model with expanded brand and name coverage. Accuracy improved from 75.4% to 80.5% on real-world domains. API unchanged — just `pip install --upgrade dksplit`.
+
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
 DKSplit is a lightweight model trained on millions of labeled samples covering domain names, brand names, tech terms, and multilingual phrases. It uses a BiLSTM-CRF architecture (9.47M parameters) exported to ONNX with INT8 quantization, delivering fast CPU inference in a 9 MB package.
@@ -65,6 +67,7 @@ benchmark/
 ```
 pip install dksplit wordsegment wordninja
 python benchmark/run_benchmark.py
+
 ```
 
 ### Results
