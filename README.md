@@ -140,4 +140,4 @@ At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding i
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) · Copyright 2026 ABTdomain
 
-**Attribution:** Use DKsplit by [ABTdomain](https://abtdomain.com)
+**Please attribute as:** DKsplit by [ABTdomain](https://abtdomain.com)
