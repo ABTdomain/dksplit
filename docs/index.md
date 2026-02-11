@@ -1,5 +1,7 @@
 # DKSplit
 
+**Version: 0.2.3**
+
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
 ## About
@@ -62,8 +64,9 @@ dksplit.split_batch(["openaikey", "microsoftoffice"])
 
 - Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
 - GitHub: [github.com/ABTdomain/dksplit](https://github.com/ABTdomain/dksplit)
+- Hugging Face: [huggingface.co/ABTdomain/dksplit](https://huggingface.co/ABTdomain/dksplit)
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
 
 ## License
 
-MIT
+Apache 2.0 - Copyright 2026 ABTdomain
