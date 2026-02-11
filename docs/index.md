@@ -71,4 +71,4 @@ dksplit.split_batch(["openaikey", "microsoftoffice"])
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) · Copyright 2026 ABTdomain
 
-**Attribution:** Use DKsplit by [ABTdomain](https://abtdomain.com)
+**Please attribute as:** DKsplit by [ABTdomain](https://abtdomain.com)
