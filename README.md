@@ -129,10 +129,11 @@ At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding i
 - onnxruntime
 
 ## Links
-
 - Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
 - GitHub: [github.com/ABTdomain/dksplit](https://github.com/ABTdomain/dksplit)
+- Hugging Face: [huggingface.co/ABTdomain/dksplit](https://huggingface.co/ABTdomain/dksplit)
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
+- Go: [github.com/ABTdomain/dksplit-go](https://github.com/ABTdomain/dksplit-go)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
 ## License
