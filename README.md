@@ -136,6 +136,14 @@ At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding i
 - Go: [github.com/ABTdomain/dksplit-go](https://github.com/ABTdomain/dksplit-go)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
+## Why BiLSTM-CRF?
+
+During development, we evaluated several architectures including BERT, Qwen3, and Seq2Seq models. BiLSTM-CRF proved to be the best fit for this task:
+
+- **BERT/Qwen3:** These models carry too much general language knowledge, which interferes with pure segmentation — they over-interpret inputs rather than simply finding word boundaries.
+- **Seq2Seq:** Prone to hallucination on unseen inputs — generating characters not in the original string.
+- **BiLSTM-CRF:** Learns character-level boundary patterns without excess semantic baggage. The right balance of accuracy, speed, size, and reliability. CRF decoding guarantees structurally valid output.
+
 ## License
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) · Copyright 2026 ABTdomain
