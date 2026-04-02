@@ -136,6 +136,16 @@ At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding i
 - Go: [github.com/ABTdomain/dksplit-go](https://github.com/ABTdomain/dksplit-go)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
+## Acknowledgements
+
+DKSplit v0.3 (third-round training) is supported by [EuroHPC Joint Undertaking](https://eurohpc-ju.europa.eu/) supercomputer resources, co-funded by the European Union. This round focuses on training with a significantly larger dataset and conducting comparative evaluations against larger language models including Qwen 3.5 9B. Read more: [Exploring AI Training on Europe's Supercomputers](https://abtdomain.com/blog/2026/03/exploring-ai-training-on-europes-supercomputers/).
+
+<p>
+  <img src="https://lyalpha-gmbh.com/img/eurohpc-logo.png" alt="EuroHPC Joint Undertaking" height="100">
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://lyalpha-gmbh.com/img/eu-cofunded-logo.png" alt="Co-funded by the European Union" height="80">
+</p>
+
 ## Why BiLSTM-CRF?
 
 During development, we evaluated several architectures including BERT, Qwen3, and Seq2Seq models. BiLSTM-CRF proved to be the best fit for this task:
