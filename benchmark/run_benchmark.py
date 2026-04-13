@@ -21,7 +21,9 @@ def main():
     with open(csv_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            data.append((row['input'].strip(), row['truth'].strip().lower()))
+            truth = row['input'].strip(), row['truth'].strip().lower()
+            second = row.get('2nd', '').strip().lower()
+            data.append((row['input'].strip(), row['truth'].strip().lower(), second))
 
     print(f"Benchmark: {len(data)} real newly registered domains")
     print(f"Reference: Multi-model cross-validation + human audit")
@@ -33,26 +35,31 @@ def main():
         'WordNinja': lambda t: ' '.join(wordninja.split(t)),
     }
 
-    results = {name: {'correct': 0, 'time': 0} for name in models}
+    results = {name: {'strict': 0, 'lenient': 0, 'time': 0} for name in models}
 
-    for prefix, truth in data:
+    for prefix, truth, second in data:
         for name, fn in models.items():
             start = time.perf_counter()
             result = fn(prefix)
             elapsed = time.perf_counter() - start
             results[name]['time'] += elapsed
             if result == truth:
-                results[name]['correct'] += 1
+                results[name]['strict'] += 1
+                results[name]['lenient'] += 1
+            elif second and result == second:
+                results[name]['lenient'] += 1
 
-    print(f"{'Model':<20} {'Accuracy':>10} {'Correct':>10} {'Speed':>10}")
+    print(f"{'Model':<20} {'Strict':>10} {'Lenient':>10} {'Speed':>10}")
     print(f"{'-'*20} {'-'*10} {'-'*10} {'-'*10}")
     for name in models:
         r = results[name]
-        acc = r['correct'] / len(data) * 100
+        strict = r['strict'] / len(data) * 100
+        lenient = r['lenient'] / len(data) * 100
         speed = len(data) / r['time']
-        print(f"{name:<20} {acc:>9.1f}% {r['correct']:>7}/{len(data)}  {speed:>7.0f}/s")
+        print(f"{name:<20} {strict:>9.1f}% {lenient:>9.1f}% {speed:>7.0f}/s")
 
     print(f"\nDKSplit v{dksplit.__version__}")
+    print(f"Samples with alternative segmentation: {sum(1 for _,_,s in data if s)}")
 
 
 if __name__ == "__main__":
