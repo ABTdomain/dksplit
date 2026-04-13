@@ -1,7 +1,7 @@
 """
 DKSplit Benchmark - 1,000 real newly registered domains
-Reference: GPT-5.2 segmentation
-Data source: ABTdomain.com daily feed (February 8, 2026), random sample
+Reference: Multi-model cross-validation + human audit
+Data source: ABTdomain.com daily feed (April 8, 2026), random sample
 """
 
 import csv
@@ -19,14 +19,13 @@ def main():
     csv_path = Path(__file__).parent / "sample_1000.csv"
     data = []
     with open(csv_path, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f)
+        reader = csv.DictReader(f)
         for row in reader:
-            if len(row) >= 2:
-                data.append((row[0].strip(), row[1].strip()))
+            data.append((row['input'].strip(), row['truth'].strip().lower()))
 
     print(f"Benchmark: {len(data)} real newly registered domains")
-    print(f"Reference: GPT-5.2 segmentation")
-    print(f"Source: ABTdomain.com daily feed (Feb 8, 2026), random sample\n")
+    print(f"Reference: Multi-model cross-validation + human audit")
+    print(f"Source: ABTdomain.com daily feed (Apr 8, 2026), random sample\n")
 
     models = {
         'DKSplit': lambda t: ' '.join(dksplit.split(t)),
@@ -36,13 +35,13 @@ def main():
 
     results = {name: {'correct': 0, 'time': 0} for name in models}
 
-    for prefix, gpt_answer in data:
+    for prefix, truth in data:
         for name, fn in models.items():
             start = time.perf_counter()
             result = fn(prefix)
             elapsed = time.perf_counter() - start
             results[name]['time'] += elapsed
-            if result == gpt_answer:
+            if result == truth:
                 results[name]['correct'] += 1
 
     print(f"{'Model':<20} {'Accuracy':>10} {'Correct':>10} {'Speed':>10}")
