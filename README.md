@@ -51,7 +51,7 @@ Examples of improvements:
 
 ### Dataset
 
-1,000 newly registered .com domains randomly sampled from [ABTdomain.com](https://abtdomain.com) daily feed (April 8, 2026). No filtering or cherry-picking. Ground truth was established through multi-model cross-validation (BiLSTM, Qwen 9B LoRA, Gemma 31B) and human audit.
+1,000 domains randomly sampled from the [Newly Registered Domains Database (NRDS)](https://domainkits.com/download/nrds) (.com feed, April 8, 2026). No filtering or cherry-picking. Ground truth was established through multi-model cross-validation (BiLSTM, Qwen 9B LoRA, Gemma 31B) and human audit.
 
 The dataset and evaluation script are available on [GitHub](https://github.com/ABTdomain/dksplit/tree/main/benchmark).
 
