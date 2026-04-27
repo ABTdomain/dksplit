@@ -1,12 +1,22 @@
 """
 DKSplit Benchmark - 1,000 real newly registered domains
 Reference: Multi-model cross-validation + human audit
-Data source: ABTdomain.com daily feed (April 8, 2026), random sample
+Data source: ABTdomain.com daily feed, random sample
+
+CSV columns:
+    prefix       - the concatenated input string
+    truth        - the canonical (primary) segmentation
+    might_right  - an acceptable alternative segmentation (optional)
+
+A prediction counts as:
+    Strict EM   - exact match against `truth`
+    Lenient EM  - exact match against `truth` OR `might_right`
 """
 
 import csv
 import time
 from pathlib import Path
+
 
 def main():
     import dksplit
@@ -21,13 +31,14 @@ def main():
     with open(csv_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            truth = row['input'].strip(), row['truth'].strip().lower()
-            second = row.get('2nd', '').strip().lower()
-            data.append((row['input'].strip(), row['truth'].strip().lower(), second))
+            prefix = row['prefix'].strip()
+            truth = row['truth'].strip().lower()
+            might = row.get('might_right', '').strip().lower()
+            data.append((prefix, truth, might))
 
     print(f"Benchmark: {len(data)} real newly registered domains")
     print(f"Reference: Multi-model cross-validation + human audit")
-    print(f"Source: ABTdomain.com daily feed (Apr 8, 2026), random sample\n")
+    print(f"Source: ABTdomain.com daily feed, random sample\n")
 
     models = {
         'DKSplit': lambda t: ' '.join(dksplit.split(t)),
@@ -37,16 +48,16 @@ def main():
 
     results = {name: {'strict': 0, 'lenient': 0, 'time': 0} for name in models}
 
-    for prefix, truth, second in data:
+    for prefix, truth, might in data:
         for name, fn in models.items():
             start = time.perf_counter()
-            result = fn(prefix)
+            result = fn(prefix).lower().strip()
             elapsed = time.perf_counter() - start
             results[name]['time'] += elapsed
             if result == truth:
                 results[name]['strict'] += 1
                 results[name]['lenient'] += 1
-            elif second and result == second:
+            elif might and result == might:
                 results[name]['lenient'] += 1
 
     print(f"{'Model':<20} {'Strict':>10} {'Lenient':>10} {'Speed':>10}")
@@ -59,7 +70,7 @@ def main():
         print(f"{name:<20} {strict:>9.1f}% {lenient:>9.1f}% {speed:>7.0f}/s")
 
     print(f"\nDKSplit v{dksplit.__version__}")
-    print(f"Samples with alternative segmentation: {sum(1 for _,_,s in data if s)}")
+    print(f"Samples with alternative segmentation: {sum(1 for _, _, m in data if m)}")
 
 
 if __name__ == "__main__":
