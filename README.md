@@ -139,6 +139,12 @@ For domain segmentation specifically, character-level BiLSTM-CRF turned out to b
 
 For more on this trade-off and a head-to-head failure-mode comparison with DeBERTa-V3 and the dictionary baselines, see our [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
 
+### What about the LLM-fine-tuned model?
+
+We have also fine-tuned a Qwen LoRA model on the same segmentation task and published the checkpoint on Hugging Face: [ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora). It is useful for research, evaluation, and offline batch jobs where you want a generative model's behavior on edge cases.
+
+For production use, the BiLSTM-CRF in this pip package (the ONNX-quantized model) is what we run, and what we recommend. It is the right fit when you need to segment millions of domains per day on CPU, with a 9 MB artifact and no GPU. The LLM model is too expensive to serve at our scale; we use it as a research and labeling tool, not as a runtime segmenter.
+
 ## Features
 
 - **Brand-aware:** Recognizes thousands of brands, tech products, and proper nouns
@@ -178,6 +184,7 @@ The accuracy of all of these depends on the segmentation step being correct on n
 - Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
 - GitHub: [github.com/ABTdomain/dksplit](https://github.com/ABTdomain/dksplit)
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
+- Hugging Face (LLM variant): [ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
 ## License
