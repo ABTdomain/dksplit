@@ -143,7 +143,9 @@ For more on this trade-off and a head-to-head failure-mode comparison with DeBER
 
 We have also fine-tuned a Qwen LoRA model on the same segmentation task and published the checkpoint on Hugging Face: [ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora). It is useful for research, evaluation, and offline batch jobs where you want a generative model's behavior on edge cases.
 
-For production use, the BiLSTM-CRF in this pip package (the ONNX-quantized model) is what we run, and what we recommend. It is the right fit when you need to segment millions of domains per day on CPU, with a 9 MB artifact and no GPU. The LLM model is too expensive to serve at our scale; we use it as a research and labeling tool, not as a runtime segmenter.
+For production use, the BiLSTM-CRF in this pip package (the ONNX-quantized model) is what we run, and what we recommend. It is the right fit when you need to segment millions of domains per day on CPU, with a 9 MB artifact and no GPU. A single Qwen 9B inference takes hundreds of milliseconds on a GPU and costs roughly 1000x more compute than the BiLSTM does on a single CPU thread. At our daily volume that math does not work, so we use the LLM as a research and labeling tool rather than a runtime segmenter.
+
+The benchmark numbers on the Hugging Face model card use an earlier version of our test set and are not directly comparable to the numbers in this README. The new training run for the next generation of the LLM model is not finished yet because of HPC maintenance and ongoing prompt-optimization experiments. Once that completes, we will update both this README and the Hugging Face card with results on the same benchmark.
 
 ## Features
 
