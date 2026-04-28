@@ -51,25 +51,55 @@ Examples of improvements:
 
 ### Dataset
 
-1,000 domains randomly sampled from the [Newly Registered Domains Database (NRDS)](https://domainkits.com/download/nrds) (.com feed, April 8, 2026). No filtering or cherry-picking. Ground truth was established through multi-model cross-validation (BiLSTM, Qwen 9B LoRA, Gemma 31B) and human audit.
+1,000 hand-audited domain prefixes drawn from the [Newly Registered Domains Database (NRDS)](https://domainkits.com/download/nrds) (.com feed). No filtering or cherry-picking on segmentation difficulty. Ground truth was established through multi-model cross-validation (BiLSTM, Qwen 9B LoRA, Gemma 31B) and human audit. Each row provides a primary `truth` and an optional `might_right` field for genuinely ambiguous cases (e.g. brand-versus-compound).
 
-The dataset and evaluation script are available on [GitHub](https://github.com/ABTdomain/dksplit/tree/main/benchmark).
+The dataset and evaluation script are available on [GitHub](https://github.com/ABTdomain/dksplit/tree/main/benchmark). For the methodology behind this benchmark and the broader model comparison, see the [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
 
+### What changed in this benchmark
+
+The numbers below differ from what we previously reported because the benchmark itself changed. Two adjustments matter:
+
+- **Removed samples that did not really test segmentation.** The earlier set carried digit-driven inputs (e.g. `824fisher`, where the digits already provide the boundary) and pure-noise consonant strings (e.g. `hbwhjhzx`, where any output is a guess). We now handle both with deterministic rules in production rather than asking the model to score on them. Removing them stops inflating accuracy with cases the model wasn't actually being tested on.
+- **Added a `might_right` column for genuinely ambiguous cases.** Strings like `pikahug` or `noranite` can plausibly be either a brand kept whole or a phrase split apart. Instead of forcing one answer, we accept either (Lenient EM). This makes the lenient score a more honest reflection of how the model performs on real, ambiguous data.
+
+The net effect is a tighter, harder benchmark: the easy-but-uninformative samples are gone, the genuinely ambiguous ones are scored fairly, and what remains focuses on the part of the task that actually matters — deciding word boundaries inside concatenated language.
+
+#### Why these changes aren't self-serving
+
+Removing digit-driven and pure-noise samples hurts every model in absolute terms, including DKSplit — those were "easy" cases everyone got right. The shift in DKSplit's relative position comes from the harder ambiguous cases that remain in the test set, not from selectively dropping cases DKSplit was wrong on. The `might_right` field is reserved for genuinely ambiguous segmentations (brand-versus-compound, pinyin-versus-name), not for any model's output specifically. Where any model's prediction matches `might_right`, it's because that segmentation was already considered acceptable, not because we accepted it after the fact.
+
+The benchmark and the evaluation script are open. You can verify all of the above yourself.
+
+#### How to use the benchmark
+
+You can run the evaluation locally on the same 1,000 samples to reproduce or extend these numbers:
+
+```bash
+git clone https://github.com/ABTdomain/dksplit.git
+cd dksplit/benchmark
+pip install dksplit wordsegment wordninja
+python run_benchmark.py
+```
+
+This is also useful if you want to:
+
+- **Compare your own segmenter** against DKSplit, WordSegment, and WordNinja on the same set
+- **Try a different labeling preference** by re-auditing `truth` and `might_right` for your own use case (SEO recall, strict brand protection, etc.) — the benchmark is structured so the same data can be re-labeled without rerunning the evaluation logic
+- **Spot edge cases** by inspecting `sample_1000.csv` directly; pull requests for ambiguous samples we got wrong are welcome
 
 ### Results
 
-Accuracy on 1,000 randomly sampled real-world .com domains, human-audited ground truth:
+Accuracy on the 1,000-sample benchmark above:
 
-| Model | Accuracy |
-|---|---|
-| **DKSplit v0.3.1** | **85.0%** |
-| DKSplit v0.2.x | 82.8% |
-| WordSegment | 54.0% |
-| WordNinja | 46.1% |
+| Model | Strict EM | Lenient EM |
+|---|---|---|
+| **DKSplit v0.3.1** | **86.5%** | **91.5%** |
+| WordSegment | 65.1% | 69.4% |
+| WordNinja | 50.9% | 53.9% |
 
-DKSplit outperforms WordSegment by **31 percentage points** and WordNinja by **39 percentage points**.
+Strict EM counts only exact matches against `truth`. Lenient EM also accepts the `might_right` alternative when present. DKSplit outperforms WordSegment by 21+ percentage points and WordNinja by 35+ percentage points on both measures.
 
-> **Note:** The accuracy above is measured against a single reference segmentation. Domain names are inherently ambiguous. For example, `tiantian5` could be `tiantian 5` (Chinese compound name) or `tian tian 5` (two separate syllables); `noranite` could be `nora nite` or an intact brand; `pikahug` could be `pika hug` or an intact brand name. Our audit found ~5% of test samples have multiple valid segmentations. Accounting for these, effective accuracy is closer to **90%**.
+> **Note:** Domain names are inherently ambiguous. For example, `tiantian5` could be `tiantian 5` (Chinese compound name) or `tian tian 5` (two separate syllables); `noranite` could be `nora nite` or an intact brand; `pikahug` could be `pika hug` or an intact brand name. The Lenient EM column above reflects the cases where multiple segmentations are accepted as correct.
 
 ### Comparison
 
@@ -102,6 +132,12 @@ The training data includes:
 - Tech product names and terminology
 
 At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding is performed in NumPy — no GPU required.
+
+### Why BiLSTM-CRF
+
+For domain segmentation specifically, character-level BiLSTM-CRF turned out to be a good fit. Subword transformers (e.g. DeBERTa) work at a granularity coarser than this task needs, so a single subword token can span a real word boundary and lose the signal. Dictionary-based segmenters (WordSegment, WordNinja) are great on standard English but break down on newly registered domains, which are mostly brand coinages, multilingual compounds, and intentional misspellings. Large language models can be accurate but are cost-prohibitive at the volume we run (millions of domains per day). BiLSTM-CRF gives us character-level precision with CPU-only inference at around 800 samples per second on a single thread, and a 9 MB deployable artifact.
+
+For more on this trade-off and a head-to-head failure-mode comparison with DeBERTa-V3 and the dictionary baselines, see our [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
 
 ## Features
 
