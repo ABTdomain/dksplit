@@ -1,6 +1,6 @@
 # DKSplit
 
-> **v0.3.1** — Model upgraded to EuroHPC infrastructure (Leonardo Booster, NVIDIA A100). ~3% accuracy improvement over v0.2.x on real-world domains. API unchanged.
+> **v0.3.1**: Model upgraded to EuroHPC infrastructure (Leonardo Booster, NVIDIA A100). ~3% accuracy improvement over v0.2.x on real-world domains. API unchanged.
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -62,11 +62,11 @@ The numbers below differ from what we previously reported because the benchmark 
 - **Removed samples that did not really test segmentation.** The earlier set carried digit-driven inputs (e.g. `824fisher`, where the digits already provide the boundary) and pure-noise consonant strings (e.g. `hbwhjhzx`, where any output is a guess). We now handle both with deterministic rules in production rather than asking the model to score on them. Removing them stops inflating accuracy with cases the model wasn't actually being tested on.
 - **Added a `might_right` column for genuinely ambiguous cases.** Strings like `pikahug` or `noranite` can plausibly be either a brand kept whole or a phrase split apart. Instead of forcing one answer, we accept either (Lenient EM). This makes the lenient score a more honest reflection of how the model performs on real, ambiguous data.
 
-The net effect is a tighter, harder benchmark: the easy-but-uninformative samples are gone, the genuinely ambiguous ones are scored fairly, and what remains focuses on the part of the task that actually matters — deciding word boundaries inside concatenated language.
+The net effect is a tighter, harder benchmark: the easy-but-uninformative samples are gone, the genuinely ambiguous ones are scored fairly, and what remains focuses on the part of the task that actually matters, which is deciding word boundaries inside concatenated language.
 
 #### Why these changes aren't self-serving
 
-Removing digit-driven and pure-noise samples hurts every model in absolute terms, including DKSplit — those were "easy" cases everyone got right. The shift in DKSplit's relative position comes from the harder ambiguous cases that remain in the test set, not from selectively dropping cases DKSplit was wrong on. The `might_right` field is reserved for genuinely ambiguous segmentations (brand-versus-compound, pinyin-versus-name), not for any model's output specifically. Where any model's prediction matches `might_right`, it's because that segmentation was already considered acceptable, not because we accepted it after the fact.
+Removing digit-driven and pure-noise samples hurts every model in absolute terms, including DKSplit. Those were "easy" cases everyone got right. The shift in DKSplit's relative position comes from the harder ambiguous cases that remain in the test set, not from selectively dropping cases DKSplit was wrong on. The `might_right` field is reserved for genuinely ambiguous segmentations (brand-versus-compound, pinyin-versus-name), not for any model's output specifically. Where any model's prediction matches `might_right`, it's because that segmentation was already considered acceptable, not because we accepted it after the fact.
 
 The benchmark and the evaluation script are open. You can verify all of the above yourself.
 
@@ -84,7 +84,7 @@ python run_benchmark.py
 This is also useful if you want to:
 
 - **Compare your own segmenter** against DKSplit, WordSegment, and WordNinja on the same set
-- **Try a different labeling preference** by re-auditing `truth` and `might_right` for your own use case (SEO recall, strict brand protection, etc.) — the benchmark is structured so the same data can be re-labeled without rerunning the evaluation logic
+- **Try a different labeling preference** by re-auditing `truth` and `might_right` for your own use case (SEO recall, strict brand protection, etc.). The benchmark is structured so the same data can be re-labeled without rerunning the evaluation logic.
 - **Spot edge cases** by inspecting `sample_1000.csv` directly; pull requests for ambiguous samples we got wrong are welcome
 
 ### Results
@@ -131,7 +131,7 @@ The training data includes:
 - Multilingual phrases (English, French, German, Spanish, and more)
 - Tech product names and terminology
 
-At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding is performed in NumPy — no GPU required.
+At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding is performed in NumPy. No GPU required.
 
 ### Why BiLSTM-CRF
 
@@ -145,6 +145,19 @@ For more on this trade-off and a head-to-head failure-mode comparison with DeBER
 - **Multilingual:** Handles English, French, German, Spanish, and romanized text
 - **Lightweight:** 9 MB model, minimal dependencies (numpy + onnxruntime)
 - **Offline:** No API keys, no internet required
+
+## Used in Production
+
+DKSplit powers the keyword extraction layer behind [DomainKits Keywords Trends](https://domainkits.com/trends/keywords). Every newly registered domain is segmented by DKSplit, then the extracted keywords go through a data-cleaning pass before being aggregated into trend signals. The same cleaned keyword stream feeds several different analyses: hot keywords (currently active), emerging keywords (rising from a low base), and TLD-specific or registrar-specific cuts of the same data.
+
+Combining segmented keywords with the rest of a domain's metadata (TLD, registrar, registration date, WHOIS fields) opens up a range of downstream uses:
+
+- **Brand protection:** spot newly registered domains containing your brand or close lookalikes
+- **Keyword tracking:** follow how a topic, technology, or trend shows up in newly registered domains over time
+- **Domain investment research:** surface keyword clusters that are gaining traction before they become obvious
+- **Market intelligence:** see which categories and verticals are growing in domain registration activity
+
+The accuracy of all of these depends on the segmentation step being correct on novel, never-seen-before domain strings. That is what DKSplit is built for, and why we keep iterating on it.
 
 ## Limitations
 
