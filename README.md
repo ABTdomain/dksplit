@@ -1,122 +1,106 @@
-# DKSplit
-
-> **v1.0.0**: First stable release. The model is frozen and the API is stable. Includes the top-k API: `split3()` / `split5()` / `split_topk()` return the k best candidate segmentations, ranked.
-
-String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
-
-DKSplit is a lightweight model trained on millions of labeled samples covering domain names, brand names, tech terms, and multilingual phrases. It uses a BiLSTM-CRF architecture (9.47M parameters) exported to ONNX with INT8 quantization, delivering fast CPU inference in a 9 MB package.
-
-Originally built for domain name analysis at [DomainKits](https://domainkits.com), but works well on any concatenated text: hashtags, URLs, identifiers, compound strings.
-
-## Install
-```
-pip install dksplit
-```
+Requires Python >= 3.8. Dependencies: numpy, onnxruntime.
 
 ## Usage
+
 ```python
 import dksplit
 
-dksplit.split("chatgptlogin")
-# ['chatgpt', 'login']
-
+# Single best segmentation
 dksplit.split("kubernetescluster")
 # ['kubernetes', 'cluster']
 
-dksplit.split("mercibeaucoup")
-# ['merci', 'beaucoup']
-
+# Batch (faster for large volumes)
 dksplit.split_batch(["openaikey", "microsoftoffice", "bitcoinprice"])
 # [['openai', 'key'], ['microsoft', 'office'], ['bitcoin', 'price']]
 
-dksplit.split3("noranite")        # top-3 candidates, best first
+# Ranked candidates for ambiguous inputs
+dksplit.split3("noranite")        # top-3, best first
 # [['nora', 'nite'], ['noranite'], ['nor', 'anite']]
 
-dksplit.split5("pikahug")         # top-5 candidates
+dksplit.split5("pikahug")         # top-5
 # [['pikahug'], ['pika', 'hug'], ['pik', 'ahug'], ['pikah', 'ug'], ['pi', 'kahug']]
 
 dksplit.split_topk("chatgptlogin", k=3)   # any k
 # [['chatgpt', 'login'], ['chatgptlogin'], ['chatgpt', 'log', 'in']]
 ```
 
+## What can you do with it
+
+Anywhere you need to turn unspaced strings into words, offline and at volume:
+
+- **Brand protection & lookalike detection.** Segment newly registered domains
+  to spot ones containing your brand or close variants (`yourbrandlogin`,
+  `getyourbrand`). Use `split_topk` so a brand name split across candidates
+  never slips through: matching against all k candidates raises recall.
+- **SEO & keyword extraction.** Extract keywords from domain names, URLs, and
+  hashtags for trend analysis, content research, or search indexing.
+- **Domain investment research.** Decompose large domain lists into keyword
+  signals: which words are being registered, in which combinations, on which TLDs.
+- **Data cleaning & entity resolution.** Normalize concatenated identifiers,
+  usernames, or product codes before matching and deduplication.
+- **Search & autocomplete.** Understand queries typed without spaces.
+
+Two ways to consume the output, depending on your task:
+
+- **`split()`** when you need one answer per input: pipelines, aggregation,
+  statistics.
+- **`split_topk()`** when the input may be ambiguous and you can use a ranked
+  shortlist: recall-sensitive matching, human review UIs, or feeding your own
+  reranker with domain-specific signals (brand lists, frequency data, metadata).
+  An acceptable segmentation is present in the top-3 candidates 98.5% of the
+  time, and in the top-5 99.3% of the time (see benchmark below).
+
 ## What's New in v1.0.0
 
-First stable release. The model is frozen and the public API (`split`, `split_batch`, `split_topk` / `split3` / `split5`) is stable.
+First stable release.
 
-### From one answer to a set of answers
-
-A single segmentation has to commit to one reading, but real domains are often genuinely ambiguous (is `noranite` a brand, or `nora nite`?). Instead of forcing one fixed answer, top-k returns a set of ranked candidates. For some use cases that is simply the better solution: when the input is ambiguous, a small ranked set is more honest, and more useful, than a single guess that has to be right or wrong.
-
-### Why the model is frozen
-
-From an engineering standpoint it is already the best trade-off between accuracy and speed: a 9 MB CPU-only model with no GPU or external dependencies. Larger models score higher but cost hundreds of times the compute (see the [EuroHPC blog post](https://abtdomain.com/blog/2026/06/dksplit-on-eurohpc-unlocking-a-4b-models-knowledge-through-chain-of-thought/)), so we froze it as a stable baseline and put further gains into the candidate layer rather than a heavier model.
-
-### The top-k API
-
-The top-k API returns the k best candidate segmentations instead of just one. `split()` and `split_batch()` are unchanged.
-
-```python
-dksplit.split3(text)            # top-3 candidates, best first
-dksplit.split5(text)            # top-5 candidates
-dksplit.split_topk(text, k=3)   # any k
-```
-
-Candidates are decoded with k-best Viterbi over the same CRF: no model change, no new dependencies, and only a small speed overhead. Inputs with fewer than k possible segmentations return fewer candidates.
-
-Across both benchmarks, an acceptable segmentation (`truth` or `might_right`) is present within the top-k candidates far more often than in the single best output:
-
-| Benchmark | top-1 | top-3 | top-5 |
-|---|---|---|---|
-| 1,000 samples | 91.5% | 98.5% | 99.3% |
-| 5,000 samples | 90.4% | 97.8% | 99.0% |
-
-The candidates are returned ranked, best first; how you consume them is up to your application.
+- **Stability guarantees:** the model weights are frozen (identical input →
+  identical output across v1.x), and the public API (`split`, `split_batch`,
+  `split_topk` / `split3` / `split5`) will not break within v1.x (SemVer).
+- **Top-k API:** instead of forcing one answer on genuinely ambiguous inputs
+  (is `noranite` a brand, or `nora nite`?), `split_topk` returns a small ranked
+  set of candidates. Decoded with k-best Viterbi over the same CRF: no model
+  change, no new dependencies, only a small speed overhead. Inputs with fewer
+  than k possible segmentations return fewer candidates.
+- **Why the model is frozen:** at 9 MB and CPU-only it is the right
+  accuracy/speed/cost trade-off for high-volume use. Larger models score
+  somewhat higher but cost orders of magnitude more compute per string, so we
+  froze this model as a stable baseline and put further gains into the
+  candidate layer instead of a heavier model.
 
 ## Benchmark
 
+> **Scope:** all numbers below are measured on this PyPI package
+> (`dksplit==1.0.0`) running standalone, with the dataset and script published
+> in [`/benchmark`](https://github.com/ABTdomain/dksplit/tree/main/benchmark).
+> You can reproduce them locally.
+
+> **Note:** the benchmark methodology changed in v1.0.0 (samples that didn't
+> test segmentation were removed; a `might_right` field was added for genuinely
+> ambiguous cases). Numbers are **not comparable** to previously reported
+> results. See the [v1.0.0 release notes](https://github.com/ABTdomain/dksplit/releases/tag/v1.0.0)
+> and the [methodology blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/)
+> for details.
+
 ### Dataset
 
-1,000 hand-audited domain prefixes drawn from the [Newly Registered Domains Database (NRDS)](https://domainkits.com/download/nrds) (.com feed). No filtering or cherry-picking on segmentation difficulty. Ground truth was established through multi-model cross-validation (BiLSTM, Qwen 9B LoRA, Gemma 31B) and human audit. Each row provides a primary `truth` and an optional `might_right` field for genuinely ambiguous cases (e.g. brand-versus-compound).
+1,000 hand-audited domain prefixes drawn from the
+[Newly Registered Domains Database (NRDS)](https://domainkits.com/download/nrds)
+(.com feed). No filtering or cherry-picking on segmentation difficulty. Ground
+truth was established through multi-model cross-validation (BiLSTM, Qwen 9B
+LoRA, Gemma 31B) and human audit. Each row provides a primary `truth` and an
+optional `might_right` field for genuinely ambiguous cases (e.g.
+brand-versus-compound).
 
-The dataset and evaluation script are available on [GitHub](https://github.com/ABTdomain/dksplit/tree/main/benchmark). For the methodology behind this benchmark and the broader model comparison, see the [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
-
-This benchmark is multi-audited, but it is only a reference point. Human language is endlessly varied. No fixed test set of any size can cover every brand coinage, multilingual compound, or naming convention that shows up in real registrations, and we make no claim of 100% coverage. The honest way to judge DKSplit is on your own data: download a fresh batch of newly registered domains from [domainkits.com/download/nrds](https://domainkits.com/download/nrds) (free, domain-name-only files) and run them through it.
-
-### What changed in this benchmark
-
-The numbers below differ from what we previously reported because the benchmark itself changed. Two adjustments matter:
-
-- **Removed samples that did not really test segmentation.** The earlier set carried digit-driven inputs (e.g. `824fisher`, where the digits already provide the boundary) and pure-noise consonant strings (e.g. `hbwhjhzx`, where any output is a guess). We now handle both with deterministic rules in production rather than asking the model to score on them. Removing them stops inflating accuracy with cases the model wasn't actually being tested on.
-- **Added a `might_right` column for genuinely ambiguous cases.** Strings like `pikahug` or `noranite` can plausibly be either a brand kept whole or a phrase split apart. Instead of forcing one answer, we accept either (Lenient EM). This makes the lenient score a more honest reflection of how the model performs on real, ambiguous data.
-
-The net effect is a tighter, harder benchmark: the easy-but-uninformative samples are gone, the genuinely ambiguous ones are scored fairly, and what remains focuses on the part of the task that actually matters, which is deciding word boundaries inside concatenated language.
-
-#### Why these changes aren't self-serving
-
-Removing digit-driven and pure-noise samples hurts every model in absolute terms, including DKSplit. Those were "easy" cases everyone got right. The shift in DKSplit's relative position comes from the harder ambiguous cases that remain in the test set, not from selectively dropping cases DKSplit was wrong on. The `might_right` field is reserved for genuinely ambiguous segmentations (brand-versus-compound, pinyin-versus-name), not for any model's output specifically. Where any model's prediction matches `might_right`, it's because that segmentation was already considered acceptable, not because we accepted it after the fact.
-
-The benchmark and the evaluation script are open. You can verify all of the above yourself.
-
-#### How to use the benchmark
-
-You can run the evaluation locally on the same 1,000 samples to reproduce or extend these numbers:
-
-```bash
-git clone https://github.com/ABTdomain/dksplit.git
-cd dksplit/benchmark
-pip install dksplit wordsegment wordninja
-python run_benchmark.py
-```
-
-This is also useful if you want to:
-
-- **Compare your own segmenter** against DKSplit, WordSegment, and WordNinja on the same set
-- **Try a different labeling preference** by re-auditing `truth` and `might_right` for your own use case (SEO recall, strict brand protection, etc.). The benchmark is structured so the same data can be re-labeled without rerunning the evaluation logic.
-- **Spot edge cases** by inspecting `sample_1000.csv` directly; pull requests for ambiguous samples we got wrong are welcome
+This benchmark is multi-audited, but it is only a reference point. No fixed
+test set can cover every brand coinage, multilingual compound, or naming
+convention in real registrations, and we make no claim of 100% coverage. The
+honest way to judge DKSplit is on your own data: download a fresh batch of
+newly registered domains from
+[domainkits.com/download/nrds](https://domainkits.com/download/nrds) (free,
+domain-name-only files) and run them through it.
 
 ### Results
-
-Accuracy on the 1,000-sample benchmark above:
 
 | Model | Strict EM | Lenient EM |
 |---|---|---|
@@ -124,9 +108,47 @@ Accuracy on the 1,000-sample benchmark above:
 | WordSegment | 65.2% | 69.5% |
 | WordNinja | 51.0% | 54.0% |
 
-Strict EM counts only exact matches against `truth`. Lenient EM also accepts the `might_right` alternative when present. DKSplit outperforms WordSegment by 21+ percentage points and WordNinja by 35+ percentage points on both measures.
+Strict EM counts only exact matches against `truth`. Lenient EM also accepts
+the `might_right` alternative when present.
 
-> **Note:** Domain names are inherently ambiguous. For example, `tiantian5` could be `tiantian 5` (Chinese compound name) or `tian tian 5` (two separate syllables); `noranite` could be `nora nite` or an intact brand; `pikahug` could be `pika hug` or an intact brand name. The Lenient EM column above reflects the cases where multiple segmentations are accepted as correct.
+Top-k coverage (an acceptable segmentation is present within the candidates):
+
+| Benchmark | top-1 | top-3 | top-5 |
+|---|---|---|---|
+| 1,000 samples | 91.5% | 98.5% | 99.3% |
+| 5,000 samples | 90.4% | 97.8% | 99.0% |
+
+The 5,000-sample set is a larger benchmark built the same way as the
+1,000-sample set: same NRDS .com source, same multi-model cross-validation and
+human audit, same `truth` / `might_right` format. It ships in the same
+[`/benchmark`](https://github.com/ABTdomain/dksplit/tree/main/benchmark)
+directory as `benchmark_5000.csv` and is also published on Hugging Face as
+[ABTdomain/dksplit-benchmark](https://huggingface.co/datasets/ABTdomain/dksplit-benchmark).
+
+> Domain names are inherently ambiguous: `tiantian5` could be `tiantian 5`
+> (compound name) or `tian tian 5`; `noranite` could be `nora nite` or an
+> intact brand. The Lenient EM column and the `might_right` field exist to
+> score such cases fairly.
+
+### Reproduce it yourself
+
+```bash
+git clone https://github.com/ABTdomain/dksplit.git
+cd dksplit/benchmark
+pip install dksplit wordsegment wordninja
+python run_benchmark.py                     # 1,000-sample set
+python run_benchmark.py benchmark_5000.csv  # 5,000-sample set
+```
+
+Also useful if you want to:
+
+- **Compare your own segmenter** against DKSplit, WordSegment, and WordNinja
+  on the same set
+- **Re-label for your use case** (SEO recall, strict brand protection, etc.):
+  the benchmark is structured so the same data can be re-audited without
+  changing the evaluation logic
+- **Spot edge cases** by inspecting `sample_1000.csv` directly; pull requests
+  for ambiguous samples we got wrong are welcome
 
 ### Comparison
 
@@ -149,82 +171,78 @@ Strict EM counts only exact matches against `truth`. Lenient EM also accepts the
 
 ## How It Works
 
-DKSplit treats segmentation as a sequence labeling task.
+DKSplit treats segmentation as a character-level sequence labeling task. The
+training data includes LLM-labeled domain segmentations, brand names, personal
+name combinations, multilingual phrases (English, French, German, Spanish, and
+more), and tech product names. At inference, the BiLSTM runs as an
+INT8-quantized ONNX model and CRF decoding is performed in NumPy. No GPU
+required; around 800 samples per second on a single CPU thread.
 
-The training data includes:
-- LLM-labeled domain name segmentations
-- Brand names
-- Personal name combinations
-- Multilingual phrases (English, French, German, Spanish, and more)
-- Tech product names and terminology
+**Why BiLSTM-CRF:** dictionary-based segmenters (WordSegment, WordNinja) work
+on standard English but break down on newly registered domains: mostly brand
+coinages, multilingual compounds, and intentional misspellings. Subword
+transformers (e.g. DeBERTa) operate at a granularity coarser than this task
+needs, so a single subword token can span a real word boundary and lose the
+signal. Large language models can be accurate but cost orders of magnitude more
+per string, which doesn't work at millions of inputs per day. Character-level
+BiLSTM-CRF hits the practical optimum: character precision, CPU-only inference,
+a 9 MB artifact. For a head-to-head failure-mode comparison with DeBERTa-V3 and
+the dictionary baselines, see the
+[DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
 
-At inference, the BiLSTM runs as an INT8-quantized ONNX model and CRF decoding is performed in NumPy. No GPU required.
-
-### Why BiLSTM-CRF
-
-For domain segmentation specifically, character-level BiLSTM-CRF turned out to be a good fit. Subword transformers (e.g. DeBERTa) work at a granularity coarser than this task needs, so a single subword token can span a real word boundary and lose the signal. Dictionary-based segmenters (WordSegment, WordNinja) are great on standard English but break down on newly registered domains, which are mostly brand coinages, multilingual compounds, and intentional misspellings. Large language models can be accurate but are cost-prohibitive at the volume we run (millions of domains per day). BiLSTM-CRF gives us character-level precision with CPU-only inference at around 800 samples per second on a single thread, and a 9 MB deployable artifact.
-
-For more on this trade-off and a head-to-head failure-mode comparison with DeBERTa-V3 and the dictionary baselines, see our [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
-
-### What about the LLM-fine-tuned model?
-
-We have also fine-tuned a Qwen LoRA model on the same segmentation task and published the checkpoint on Hugging Face: [ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora). It is useful for research, evaluation, and offline batch jobs where you want a generative model's behavior on edge cases.
-
-For production use, the BiLSTM-CRF in this pip package (the ONNX-quantized model) is what we run, and what we recommend. It is the right fit when you need to segment millions of domains per day on CPU, with a 9 MB artifact and no GPU. A single Qwen 9B inference takes hundreds of milliseconds on a GPU and costs roughly 1000x more compute than the BiLSTM does on a single CPU thread. At our daily volume that math does not work, so we use the LLM as a research and labeling tool rather than a runtime segmenter.
-
-The benchmark numbers on the Hugging Face model card use an earlier version of our test set and are not directly comparable to the numbers in this README. The new training run for the next generation of the LLM model is not finished yet because of HPC maintenance and ongoing prompt-optimization experiments. Once that completes, we will update both this README and the Hugging Face card with results on the same benchmark.
+**LLM variant:** we have also fine-tuned a Qwen LoRA on the same task and
+published the checkpoint at
+[ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora).
+It is useful for research, evaluation, and offline batch jobs where you want a
+generative model's behavior on edge cases.
 
 ## Features
 
-- **Brand-aware:** Recognizes thousands of brands, tech products, and proper nouns
-- **Multilingual:** Handles English, French, German, Spanish, and romanized text
+- **Brand-aware:** recognizes thousands of brands, tech products, and proper nouns
+- **Multilingual:** English, French, German, Spanish, and romanized text
 - **Lightweight:** 9 MB model, minimal dependencies (numpy + onnxruntime)
-- **Offline:** No API keys, no internet required
-- **Top-k candidates:** `split3` / `split5` / `split_topk` return ranked alternative segmentations
-
-## Used in Production
-
-DKSplit powers the keyword extraction layer behind [DomainKits Keywords Trends](https://domainkits.com/trends/keywords). Every newly registered domain is segmented by DKSplit, then the extracted keywords go through a data-cleaning pass before being aggregated into trend signals. The same cleaned keyword stream feeds several different analyses: hot keywords (currently active), emerging keywords (rising from a low base), and TLD-specific or registrar-specific cuts of the same data.
-
-Combining segmented keywords with the rest of a domain's metadata (TLD, registrar, registration date, WHOIS fields) opens up a range of downstream uses:
-
-- **Brand protection:** spot newly registered domains containing your brand or close lookalikes
-- **Keyword tracking:** follow how a topic, technology, or trend shows up in newly registered domains over time
-- **Domain investment research:** surface keyword clusters that are gaining traction before they become obvious
-- **Market intelligence:** see which categories and verticals are growing in domain registration activity
-
-The accuracy of all of these depends on the segmentation step being correct on novel, never-seen-before domain strings. That is what DKSplit is built for, and why we keep iterating on it.
+- **Offline:** no API keys, no internet required
+- **Top-k candidates:** `split3` / `split5` / `split_topk` return ranked
+  alternative segmentations
 
 ## Limitations
 
-- **Characters:** Only `a-z` and `0-9`. Input is automatically lowercased.
+- **Characters:** only `a-z` and `0-9`. Input is automatically lowercased.
+  Any other character (hyphen, dot, underscore) is mapped to an unknown token
+  and kept in the output rather than treated as a separator:
+  `split("your-brandlogin")` returns `['your-', 'brand', 'login']`. For real
+  domains and URLs, split on `-`, `.`, and `/` first and feed each
+  letters-and-digits run separately. In general, boundaries between letters
+  and non-letters should be split with conventional rules first, not handed
+  to the model.
 - **Max length:** 64 characters.
-- **Script:** Latin script only. Non-Latin scripts (汉字, かな, 한글, العربية) are not supported.
-- **Ambiguity:** Some inputs are genuinely ambiguous. DKSplit optimizes for the most common interpretation.
-- **Rare languages:** Accuracy is highest on English and major European languages.
-
-## Requirements
-
-- Python >= 3.8
-- numpy
-- onnxruntime
+- **Script:** Latin script only. Non-Latin scripts (汉字, かな, 한글, العربية)
+  are not supported.
+- **Ambiguity:** some inputs are genuinely ambiguous. `split()` optimizes for
+  the most common interpretation; use `split_topk()` when you need the
+  alternatives.
+- **Rare languages:** accuracy is highest on English and major European languages.
 
 ## Links
 
 - Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
-- GitHub: [github.com/ABTdomain/dksplit](https://github.com/ABTdomain/dksplit)
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
 - Hugging Face (LLM variant): [ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora)
 - Issues: [GitHub Issues](https://github.com/ABTdomain/dksplit/issues)
 
 ## License
 
-This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-
-**Attribution required.** Any public or production use of DKSplit must visibly credit **DKSplit from [ABTdomain.com](https://abtdomain.com)**, for example in your README, documentation, about page, or API response metadata. This requirement is in addition to the Apache-2.0 license terms.
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Attribution required: credit "DKSplit by [ABTdomain](https://abtdomain.com)"
+in your README, documentation, about page, or API response metadata.
 
 ## Acknowledgements
 
 <a href="https://eurohpc-ju.europa.eu/"><img src="https://raw.githubusercontent.com/ABTdomain/dksplit/main/docs/images/eurohpc-logo.png" alt="EuroHPC JU" width="80"></a> &nbsp; <a href="https://commission.europa.eu/"><img src="https://raw.githubusercontent.com/ABTdomain/dksplit/main/docs/images/eu-cofunded-logo.png" alt="Co-funded by the EU" width="200"></a>
 
-The model was trained on the [Leonardo Booster](https://www.hpc.cineca.it/systems/hardware/leonardo/) supercomputer at CINECA, Italy, with computing resources provided by the [EuroHPC Joint Undertaking](https://eurohpc-ju.europa.eu/) through the Playground Access program (project AIFAC_P02_281). We thank EuroHPC JU for enabling SMEs to explore new possibilities with world-class HPC infrastructure.
+The model was trained on the
+[Leonardo Booster](https://www.hpc.cineca.it/systems/hardware/leonardo/)
+supercomputer at CINECA, Italy, with computing resources provided by the
+[EuroHPC Joint Undertaking](https://eurohpc-ju.europa.eu/) through the
+Playground Access program (project AIFAC_P02_281). We thank EuroHPC JU for
+enabling SMEs to explore new possibilities with world-class HPC infrastructure.

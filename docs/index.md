@@ -77,6 +77,6 @@ dksplit.split_topk("chatgptlogin", k=3)   # any k
 
 ## License
 
-[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) · Copyright 2026 ABTdomain
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) · Copyright 2026 ABTdomain
 
-**Attribution required.** Any public or production use of DKSplit must visibly credit **DKSplit from [ABTdomain.com](https://abtdomain.com)**, for example in your README, documentation, about page, or API response metadata. This requirement is in addition to the Apache-2.0 license terms.
+Attribution required: credit "DKSplit by [ABTdomain](https://abtdomain.com)" in your README, documentation, about page, or API response metadata.
