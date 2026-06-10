@@ -72,23 +72,6 @@ Across both benchmarks, an acceptable segmentation (`truth` or `might_right`) is
 
 The candidates are returned ranked, best first; how you consume them is up to your application.
 
-## What's New in v0.3.1
-
-Model training upgraded from AWS to EuroHPC Leonardo Booster (NVIDIA A100), with optimized training configuration for better generalization. Improved accuracy on real-world domains, especially for brand names, multilingual inputs, and edge cases. The API is unchanged.
-```
-pip install --upgrade dksplit
-```
-
-Examples of improvements:
-
-| Input | v0.2.x | v0.3.1 |
-|---|---|---|
-| `cloudflarecdn` | cloud flare cdn | **cloudflare cdn** |
-| `databricks` | data bricks | **databricks** |
-| `instacart` | insta cart | **instacart** |
-| `robinhood` | robin hood | **robinhood** |
-| `mailchimp` | mail chimp | **mailchimp** |
-
 ## Benchmark
 
 ### Dataset
