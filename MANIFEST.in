@@ -1,3 +1,4 @@
 include LICENSE
+include NOTICE
 include README.md
 recursive-include dksplit/models *.onnx *.npz
