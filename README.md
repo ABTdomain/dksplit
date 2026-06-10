@@ -1,6 +1,6 @@
 # DKSplit
 
-> **v1.0.0**: First stable release. The model is frozen and the API is stable. Includes the top-k API — `split3()` / `split5()` / `split_topk()` return the k best candidate segmentations, ranked.
+> **v1.0.0**: First stable release. The model is frozen and the API is stable. Includes the top-k API: `split3()` / `split5()` / `split_topk()` return the k best candidate segmentations, ranked.
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -43,6 +43,16 @@ dksplit.split_topk("chatgptlogin", k=3)   # any k
 
 First stable release. The model is frozen and the public API (`split`, `split_batch`, `split_topk` / `split3` / `split5`) is stable.
 
+### From one answer to a set of answers
+
+A single segmentation has to commit to one reading, but real domains are often genuinely ambiguous (is `noranite` a brand, or `nora nite`?). Instead of forcing one fixed answer, top-k returns a set of ranked candidates. For some use cases that is simply the better solution: when the input is ambiguous, a small ranked set is more honest, and more useful, than a single guess that has to be right or wrong.
+
+### Why the model is frozen
+
+From an engineering standpoint it is already the best trade-off between accuracy and speed: a 9 MB CPU-only model with no GPU or external dependencies. Larger models score higher but cost hundreds of times the compute (see the [EuroHPC blog post](https://abtdomain.com/blog/2026/06/dksplit-on-eurohpc-unlocking-a-4b-models-knowledge-through-chain-of-thought/)), so we froze it as a stable baseline and put further gains into the candidate layer rather than a heavier model.
+
+### The top-k API
+
 The top-k API returns the k best candidate segmentations instead of just one. `split()` and `split_batch()` are unchanged.
 
 ```python
@@ -53,7 +63,7 @@ dksplit.split_topk(text, k=3)   # any k
 
 Candidates are decoded with k-best Viterbi over the same CRF: no model change, no new dependencies, and only a small speed overhead. Inputs with fewer than k possible segmentations return fewer candidates.
 
-Domain names are often genuinely ambiguous (is `noranite` a brand, or `nora nite`?), and a single output has to commit to one reading. Across both benchmarks, an acceptable segmentation (`truth` or `might_right`) is present within the top-k candidates far more often than in the single best output:
+Across both benchmarks, an acceptable segmentation (`truth` or `might_right`) is present within the top-k candidates far more often than in the single best output:
 
 | Benchmark | top-1 | top-3 | top-5 |
 |---|---|---|---|
@@ -87,7 +97,7 @@ Examples of improvements:
 
 The dataset and evaluation script are available on [GitHub](https://github.com/ABTdomain/dksplit/tree/main/benchmark). For the methodology behind this benchmark and the broader model comparison, see the [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
 
-This benchmark is multi-audited, but it is only a reference point. Human language is endlessly varied — no fixed test set of any size can cover every brand coinage, multilingual compound, or naming convention that shows up in real registrations, and we make no claim of 100% coverage. The honest way to judge DKSplit is on your own data: download a fresh batch of newly registered domains from [domainkits.com/download/nrds](https://domainkits.com/download/nrds) (free, domain-name-only files) and run them through it.
+This benchmark is multi-audited, but it is only a reference point. Human language is endlessly varied. No fixed test set of any size can cover every brand coinage, multilingual compound, or naming convention that shows up in real registrations, and we make no claim of 100% coverage. The honest way to judge DKSplit is on your own data: download a fresh batch of newly registered domains from [domainkits.com/download/nrds](https://domainkits.com/download/nrds) (free, domain-name-only files) and run them through it.
 
 ### What changed in this benchmark
 
@@ -228,7 +238,7 @@ The accuracy of all of these depends on the segmentation step being correct on n
 
 This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-**Attribution required.** Any public or production use of DKSplit must visibly credit **DKSplit from [ABTdomain.com](https://abtdomain.com)** — for example in your README, documentation, about page, or API response metadata. This requirement is in addition to the Apache-2.0 license terms.
+**Attribution required.** Any public or production use of DKSplit must visibly credit **DKSplit from [ABTdomain.com](https://abtdomain.com)**, for example in your README, documentation, about page, or API response metadata. This requirement is in addition to the Apache-2.0 license terms.
 
 ## Acknowledgements
 
