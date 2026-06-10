@@ -40,42 +40,6 @@ dksplit.split_topk("chatgptlogin", k=3)   # any k
 ```
 
 ## What's New in v1.0.0
-<<<<<<< HEAD
-=======
-
-First stable release. The model is frozen and the public API (`split`, `split_batch`, `split_topk` / `split3` / `split5`) is stable.
-
-### From one answer to a set of answers
-
-A single segmentation has to commit to one reading, but real domains are often genuinely ambiguous (is `noranite` a brand, or `nora nite`?). Instead of forcing one fixed answer, top-k returns a set of ranked candidates. For some use cases that is simply the better solution: when the input is ambiguous, a small ranked set is more honest, and more useful, than a single guess that has to be right or wrong.
-
-### Why the model is frozen
-
-From an engineering standpoint it is already the best trade-off between accuracy and speed: a 9 MB CPU-only model with no GPU or external dependencies. Larger models score higher but cost hundreds of times the compute (see the [EuroHPC blog post](https://abtdomain.com/blog/2026/06/dksplit-on-eurohpc-unlocking-a-4b-models-knowledge-through-chain-of-thought/)), so we froze it as a stable baseline and put further gains into the candidate layer rather than a heavier model.
-
-### The top-k API
-
-The top-k API returns the k best candidate segmentations instead of just one. `split()` and `split_batch()` are unchanged.
-
-```python
-dksplit.split3(text)            # top-3 candidates, best first
-dksplit.split5(text)            # top-5 candidates
-dksplit.split_topk(text, k=3)   # any k
-```
-
-Candidates are decoded with k-best Viterbi over the same CRF: no model change, no new dependencies, and only a small speed overhead. Inputs with fewer than k possible segmentations return fewer candidates.
-
-Across both benchmarks, an acceptable segmentation (`truth` or `might_right`) is present within the top-k candidates far more often than in the single best output:
-
-| Benchmark | top-1 | top-3 | top-5 |
-|---|---|---|---|
-| 1,000 samples | 91.5% | 98.5% | 99.3% |
-| 5,000 samples | 90.4% | 97.8% | 99.0% |
-
-The candidates are returned ranked, best first; how you consume them is up to your application.
-
-## What's New in v0.3.1
->>>>>>> 00fb48e80bae0e9e4783439c18d3fd1c7b06940c
 
 First stable release. The model is frozen and the public API (`split`, `split_batch`, `split_topk` / `split3` / `split5`) is stable.
 
@@ -263,4 +227,4 @@ This project is licensed under the [Apache License 2.0](https://www.apache.org/l
 
 <a href="https://eurohpc-ju.europa.eu/"><img src="https://raw.githubusercontent.com/ABTdomain/dksplit/main/docs/images/eurohpc-logo.png" alt="EuroHPC JU" width="80"></a> &nbsp; <a href="https://commission.europa.eu/"><img src="https://raw.githubusercontent.com/ABTdomain/dksplit/main/docs/images/eu-cofunded-logo.png" alt="Co-funded by the EU" width="200"></a>
 
-The v0.3.1 model was trained on the [Leonardo Booster](https://www.hpc.cineca.it/systems/hardware/leonardo/) supercomputer at CINECA, Italy, with computing resources provided by the [EuroHPC Joint Undertaking](https://eurohpc-ju.europa.eu/) through the Playground Access program (project AIFAC_P02_281). We thank EuroHPC JU for enabling SMEs to explore new possibilities with world-class HPC infrastructure.
+The model was trained on the [Leonardo Booster](https://www.hpc.cineca.it/systems/hardware/leonardo/) supercomputer at CINECA, Italy, with computing resources provided by the [EuroHPC Joint Undertaking](https://eurohpc-ju.europa.eu/) through the Playground Access program (project AIFAC_P02_281). We thank EuroHPC JU for enabling SMEs to explore new possibilities with world-class HPC infrastructure.
