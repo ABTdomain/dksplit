@@ -28,3 +28,5 @@ Thumbs.db
 # Dist
 *.whl
 *.tar.gz
+
+.claude
