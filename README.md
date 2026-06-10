@@ -228,7 +228,7 @@ The accuracy of all of these depends on the segmentation step being correct on n
 
 This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-**Please attribute as:** DKsplit by [ABTdomain](https://abtdomain.com)
+**Attribution required.** Any public or production use of DKSplit must visibly credit **DKSplit from [ABTdomain.com](https://abtdomain.com)** — for example in your README, documentation, about page, or API response metadata. This requirement is in addition to the Apache-2.0 license terms.
 
 ## Acknowledgements
 
