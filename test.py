@@ -72,6 +72,29 @@ for text in edge_cases:
     result = dksplit.split(text)
     print(f"  {repr(text):<30} -> {result}")
 
+# Test 5: Top-k candidates
+print("\n[Test 5] Top-k candidates")
+print("-" * 40)
+
+for text in tests:
+    result = dksplit.split3(text)
+    print(f"  {text:<30} -> {result}")
+
+print()
+ambiguous = ["pikahug", "noranite", "tiantian5"]
+for text in ambiguous:
+    result = dksplit.split5(text)
+    print(f"  {text:<30} -> {result}")
+
+# rank-1 candidate must always equal split()
+ok = all(dksplit.split_topk(t, 5)[0] == dksplit.split(t) for t in tests + ambiguous)
+print(f"\n  rank-1 == split(): {'OK' if ok else 'MISMATCH'}")
+
+# Top-k edge cases: fewer candidates than k, empty input
+for text in ["", "a", "ab"]:
+    result = dksplit.split3(text)
+    print(f"  {repr(text):<30} -> {result}")
+
 print("\n" + "=" * 60)
 print("Done!")
 print("=" * 60)
