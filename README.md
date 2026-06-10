@@ -1,6 +1,6 @@
 # DKSplit
 
-> **v0.3.1**: Model upgraded to EuroHPC infrastructure (Leonardo Booster, NVIDIA A100). ~3% accuracy improvement over v0.2.x on real-world domains. API unchanged.
+> **v1.0.0**: First stable release. The model is frozen and the API is stable. Includes the top-k API — `split3()` / `split5()` / `split_topk()` return the k best candidate segmentations, ranked.
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -28,7 +28,39 @@ dksplit.split("mercibeaucoup")
 
 dksplit.split_batch(["openaikey", "microsoftoffice", "bitcoinprice"])
 # [['openai', 'key'], ['microsoft', 'office'], ['bitcoin', 'price']]
+
+dksplit.split3("noranite")        # top-3 candidates, best first
+# [['nora', 'nite'], ['noranite'], ['nor', 'anite']]
+
+dksplit.split5("pikahug")         # top-5 candidates
+# [['pikahug'], ['pika', 'hug'], ['pik', 'ahug'], ['pikah', 'ug'], ['pi', 'kahug']]
+
+dksplit.split_topk("chatgptlogin", k=3)   # any k
+# [['chatgpt', 'login'], ['chatgptlogin'], ['chatgpt', 'log', 'in']]
 ```
+
+## What's New in v1.0.0
+
+First stable release. The model is frozen and the public API (`split`, `split_batch`, `split_topk` / `split3` / `split5`) is stable.
+
+The top-k API returns the k best candidate segmentations instead of just one. `split()` and `split_batch()` are unchanged.
+
+```python
+dksplit.split3(text)            # top-3 candidates, best first
+dksplit.split5(text)            # top-5 candidates
+dksplit.split_topk(text, k=3)   # any k
+```
+
+Candidates are decoded with k-best Viterbi over the same CRF: no model change, no new dependencies, and only a small speed overhead. Inputs with fewer than k possible segmentations return fewer candidates.
+
+Domain names are often genuinely ambiguous (is `noranite` a brand, or `nora nite`?), and a single output has to commit to one reading. Across both benchmarks, an acceptable segmentation (`truth` or `might_right`) is present within the top-k candidates far more often than in the single best output:
+
+| Benchmark | top-1 | top-3 | top-5 |
+|---|---|---|---|
+| 1,000 samples | 91.5% | 98.5% | 99.3% |
+| 5,000 samples | 90.4% | 97.8% | 99.0% |
+
+The candidates are returned ranked, best first; how you consume them is up to your application.
 
 ## What's New in v0.3.1
 
@@ -54,6 +86,8 @@ Examples of improvements:
 1,000 hand-audited domain prefixes drawn from the [Newly Registered Domains Database (NRDS)](https://domainkits.com/download/nrds) (.com feed). No filtering or cherry-picking on segmentation difficulty. Ground truth was established through multi-model cross-validation (BiLSTM, Qwen 9B LoRA, Gemma 31B) and human audit. Each row provides a primary `truth` and an optional `might_right` field for genuinely ambiguous cases (e.g. brand-versus-compound).
 
 The dataset and evaluation script are available on [GitHub](https://github.com/ABTdomain/dksplit/tree/main/benchmark). For the methodology behind this benchmark and the broader model comparison, see the [DKSplit Update blog post](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/).
+
+This benchmark is multi-audited, but it is only a reference point. Human language is endlessly varied — no fixed test set of any size can cover every brand coinage, multilingual compound, or naming convention that shows up in real registrations, and we make no claim of 100% coverage. The honest way to judge DKSplit is on your own data: download a fresh batch of newly registered domains from [domainkits.com/download/nrds](https://domainkits.com/download/nrds) (free, domain-name-only files) and run them through it.
 
 ### What changed in this benchmark
 
@@ -93,9 +127,9 @@ Accuracy on the 1,000-sample benchmark above:
 
 | Model | Strict EM | Lenient EM |
 |---|---|---|
-| **DKSplit v0.3.1** | **86.5%** | **91.5%** |
-| WordSegment | 65.1% | 69.4% |
-| WordNinja | 50.9% | 53.9% |
+| **DKSplit v1.0.0** | **86.5%** | **91.5%** |
+| WordSegment | 65.2% | 69.5% |
+| WordNinja | 51.0% | 54.0% |
 
 Strict EM counts only exact matches against `truth`. Lenient EM also accepts the `might_right` alternative when present. DKSplit outperforms WordSegment by 21+ percentage points and WordNinja by 35+ percentage points on both measures.
 
@@ -103,7 +137,7 @@ Strict EM counts only exact matches against `truth`. Lenient EM also accepts the
 
 ### Comparison
 
-| Input | DKSplit v0.3.1 | WordSegment | WordNinja |
+| Input | DKSplit v1.0.0 | WordSegment | WordNinja |
 |---|---|---|---|
 | `chatgptprompts` | **chatgpt prompts** | chat gpt prompts | chat gp t prompts |
 | `tensorflowserving` | **tensorflow serving** | tensor flow serving | tensor flow serving |
@@ -153,6 +187,7 @@ The benchmark numbers on the Hugging Face model card use an earlier version of o
 - **Multilingual:** Handles English, French, German, Spanish, and romanized text
 - **Lightweight:** 9 MB model, minimal dependencies (numpy + onnxruntime)
 - **Offline:** No API keys, no internet required
+- **Top-k candidates:** `split3` / `split5` / `split_topk` return ranked alternative segmentations
 
 ## Used in Production
 
