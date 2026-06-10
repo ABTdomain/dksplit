@@ -14,6 +14,7 @@ A prediction counts as:
 """
 
 import csv
+import sys
 import time
 from pathlib import Path
 
@@ -25,8 +26,11 @@ def main():
 
     wordsegment.load()
 
-    # Load data
-    csv_path = Path(__file__).parent / "sample_1000.csv"
+    # Load data (optionally pass a CSV path, e.g. benchmark_5000.csv)
+    if len(sys.argv) > 1:
+        csv_path = Path(sys.argv[1])
+    else:
+        csv_path = Path(__file__).parent / "sample_1000.csv"
     data = []
     with open(csv_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -68,6 +72,22 @@ def main():
         lenient = r['lenient'] / len(data) * 100
         speed = len(data) / r['time']
         print(f"{name:<20} {strict:>9.1f}% {lenient:>9.1f}% {speed:>7.0f}/s")
+
+    # DKSplit top-k recall: acceptable answer (truth or might_right)
+    # within the top-k candidates. Requires dksplit >= 0.4.0.
+    if hasattr(dksplit, 'split_topk'):
+        hits = {1: 0, 3: 0, 5: 0}
+        for prefix, truth, might in data:
+            accept = {truth}
+            if might:
+                accept.add(might)
+            cands = [' '.join(c) for c in dksplit.split_topk(prefix, 5)]
+            for k in hits:
+                if any(c in accept for c in cands[:k]):
+                    hits[k] += 1
+        line = '   '.join(f"top-{k}: {hits[k]/len(data)*100:.1f}%" for k in (1, 3, 5))
+        print(f"\nDKSplit top-k recall (acceptable answer within top-k candidates)")
+        print(f"  {line}")
 
     print(f"\nDKSplit v{dksplit.__version__}")
     print(f"Samples with alternative segmentation: {sum(1 for _, _, m in data if m)}")

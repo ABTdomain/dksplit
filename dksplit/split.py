@@ -73,6 +73,62 @@ def _crf_decode(
     return best_paths
 
 
+def _crf_decode_topk(
+    emissions: np.ndarray,
+    transitions: np.ndarray,
+    start_transitions: np.ndarray,
+    end_transitions: np.ndarray,
+    k: int
+) -> List[np.ndarray]:
+    """
+    CRF k-best Viterbi decoding for a single sequence.
+
+    Keeps the top-k scoring paths per tag at each step, then returns all
+    finite-score paths sorted by total score (best first). The number of
+    returned paths is at most k * num_tags.
+
+    Args:
+        emissions: (seq_len, num_tags) emission scores
+        k: beam width (paths kept per tag)
+
+    Returns:
+        List of (seq_len,) int32 tag paths, best first.
+    """
+    seq_len, num_tags = emissions.shape
+
+    # score[j, r]: score of the r-th best path ending at tag j
+    score = np.full((num_tags, k), -np.inf, dtype=np.float32)
+    score[:, 0] = start_transitions + emissions[0]
+    history = []  # history[t-1][j, r] = flat index (prev_tag * k + prev_rank)
+
+    for t in range(1, seq_len):
+        # cand[i*k+r, j] = score[i, r] + transitions[i, j] + emissions[t, j]
+        cand = score[:, :, None] + transitions[:, None, :] + emissions[t][None, None, :]
+        cand = cand.reshape(num_tags * k, num_tags)
+
+        idx = np.argsort(-cand, axis=0)[:k]  # (k, num_tags)
+        history.append(idx.T)                # (num_tags, k)
+        score = np.take_along_axis(cand, idx, axis=0).T
+
+    final = score + end_transitions[:, None]
+    flat = final.reshape(-1)  # index = tag * k + rank
+    order = np.argsort(-flat)
+
+    paths = []
+    for fi in order:
+        if flat[fi] == -np.inf:
+            break
+        j, r = divmod(int(fi), k)
+        path = np.empty(seq_len, dtype=np.int32)
+        path[seq_len - 1] = j
+        for t in range(seq_len - 1, 0, -1):
+            j, r = divmod(int(history[t - 1][j, r]), k)
+            path[t - 1] = j
+        paths.append(path)
+
+    return paths
+
+
 def _decode_predictions_batch(texts: List[str], preds: np.ndarray) -> List[List[str]]:
     """Batch decode predictions to words"""
     results = []
@@ -159,7 +215,55 @@ class Splitter:
         )
         
         return _decode_predictions_batch([text], preds)[0]
-    
+
+    def split_topk(self, text: str, k: int = 3) -> List[List[str]]:
+        """
+        Split single text, returning the top-k segmentations (best first).
+
+        Each tag path maps to a segmentation; distinct paths can collide on
+        the same segmentation, so 2k paths are decoded and deduplicated.
+        Short inputs may have fewer than k possible segmentations, in which
+        case fewer candidates are returned.
+
+        Example:
+            >>> splitter.split_topk("pikahug", k=3)
+            [['pikahug'], ['pika', 'hug'], ['pik', 'ahug']]
+        """
+        if k < 1:
+            raise ValueError("k must be >= 1")
+        if not text:
+            return []
+
+        text = text.lower()[:MAX_LEN]
+        char_ids = _text_to_ids_fast(text)
+
+        chars = char_ids.reshape(1, -1)
+        emissions = self.session.run(None, {'chars': chars})[0][0]
+
+        # Each segmentation corresponds to exactly 2 tag paths (the first
+        # character's tag does not affect word boundaries), so a beam of
+        # 2k paths is always enough to yield k unique segmentations.
+        paths = _crf_decode_topk(
+            emissions,
+            self.transitions,
+            self.start_transitions,
+            self.end_transitions,
+            2 * k
+        )
+
+        results = []
+        seen = set()
+        for path in paths:
+            words = _decode_predictions_batch([text], [path])[0]
+            key = tuple(words)
+            if key not in seen:
+                seen.add(key)
+                results.append(words)
+                if len(results) == k:
+                    break
+
+        return results
+
     def split_batch(self, texts: List[str], batch_size: int = 256) -> List[List[str]]:
         """Batch split (groups by length for accuracy)"""
         if not texts:
@@ -241,10 +345,46 @@ def split(text: str) -> List[str]:
 def split_batch(texts: List[str], batch_size: int = 256) -> List[List[str]]:
     """
     Batch split texts into words
-    
+
     Example:
         >>> import dksplit
         >>> dksplit.split_batch(["openaikey", "microsoftoffice"])
         [['openai', 'key'], ['microsoft', 'office']]
     """
     return _get_splitter().split_batch(texts, batch_size)
+
+
+def split_topk(text: str, k: int = 3) -> List[List[str]]:
+    """
+    Split text into words, returning the top-k segmentations (best first)
+
+    Example:
+        >>> import dksplit
+        >>> dksplit.split_topk("pikahug", k=3)
+        [['pikahug'], ['pika', 'hug'], ['pik', 'ahug']]
+    """
+    return _get_splitter().split_topk(text, k)
+
+
+def split3(text: str) -> List[List[str]]:
+    """
+    Split text into words, returning the top-3 segmentations (best first)
+
+    Example:
+        >>> import dksplit
+        >>> dksplit.split3("chatgptlogin")
+        [['chatgpt', 'login'], ['chatgptlogin'], ['chatgpt', 'log', 'in']]
+    """
+    return _get_splitter().split_topk(text, 3)
+
+
+def split5(text: str) -> List[List[str]]:
+    """
+    Split text into words, returning the top-5 segmentations (best first)
+
+    Example:
+        >>> import dksplit
+        >>> dksplit.split5("pikahug")
+        [['pikahug'], ['pika', 'hug'], ['pik', 'ahug'], ['pikah', 'ug'], ['pi', 'kahug']]
+    """
+    return _get_splitter().split_topk(text, 5)

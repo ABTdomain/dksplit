@@ -1,6 +1,6 @@
 # DKSplit
 
-**Version: 0.2.3**
+**Version: 1.0.0**
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -32,6 +32,13 @@ dksplit.split("chatgptlogin")
 # Batch
 dksplit.split_batch(["openaikey", "microsoftoffice"])
 # [['openai', 'key'], ['microsoft', 'office']]
+
+# Top-k candidates (v0.4.0+): split3 / split5 / split_topk
+dksplit.split3("noranite")        # top-3 candidates, best first
+# [['nora', 'nite'], ['noranite'], ['nor', 'anite']]
+
+dksplit.split_topk("chatgptlogin", k=3)   # any k
+# [['chatgpt', 'login'], ['chatgptlogin'], ['chatgpt', 'log', 'in']]
 ```
 
 ## Comparison
@@ -45,6 +52,7 @@ dksplit.split_batch(["openaikey", "microsoftoffice"])
 
 - **High-Fidelity Segmentation:** 95%+ accuracy on diverse inputs
 - **Robust Brand/Phrase Handling:** Modern brand names and multi-language phrases
+- **Top-k Candidates:** `split3` / `split5` / `split_topk` return ranked alternative segmentations (v0.4.0+)
 - INT8 quantized, 9MB model size
 - ~800/s single, ~1700/s batch
 
