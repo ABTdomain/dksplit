@@ -32,4 +32,5 @@ Thumbs.db
 # Docs build
 docs/_build/
 
-.claude
+# Anything not meant for upload lives in local/
+local/
