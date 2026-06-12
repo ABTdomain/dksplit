@@ -264,8 +264,15 @@ class Splitter:
 
         return results
 
-    def split_batch(self, texts: List[str], batch_size: int = 256) -> List[List[str]]:
-        """Batch split (groups by length for accuracy)"""
+    def split_batch(self, texts: List[str], batch_size: int = 256, *,
+                    exact: bool = True) -> List[List[str]]:
+        """Batch split (groups by length; no padding).
+
+        exact=True (default): inference runs row by row, so each result is
+        guaranteed identical to split() on that text. exact=False: whole-batch
+        inference, roughly 2x faster, but results can differ slightly from
+        split() depending on batch composition.
+        """
         if not texts:
             return []
         
@@ -296,7 +303,17 @@ class Splitter:
                     chars[i] = _text_to_ids_fast(text)
                 
                 # Inference
-                emissions = self.session.run(None, {'chars': chars})[0]
+                if exact:
+                    # Row by row keeps results identical to split(): the INT8
+                    # model is dynamically quantized, so in a whole-batch run
+                    # rows perturb each other's emissions.
+                    emissions = np.concatenate(
+                        [self.session.run(None, {'chars': chars[i:i + 1]})[0]
+                         for i in range(batch_len)],
+                        axis=0
+                    )
+                else:
+                    emissions = self.session.run(None, {'chars': chars})[0]
                 
                 # CRF decode
                 preds = _crf_decode(
@@ -342,16 +359,20 @@ def split(text: str) -> List[str]:
     return _get_splitter().split(text)
 
 
-def split_batch(texts: List[str], batch_size: int = 256) -> List[List[str]]:
+def split_batch(texts: List[str], batch_size: int = 256, *,
+                exact: bool = True) -> List[List[str]]:
     """
     Batch split texts into words
+
+    Results are identical to calling split() on each text. Pass exact=False
+    for a faster mode whose results can differ slightly from split().
 
     Example:
         >>> import dksplit
         >>> dksplit.split_batch(["openaikey", "microsoftoffice"])
         [['openai', 'key'], ['microsoft', 'office']]
     """
-    return _get_splitter().split_batch(texts, batch_size)
+    return _get_splitter().split_batch(texts, batch_size, exact=exact)
 
 
 def split_topk(text: str, k: int = 3) -> List[List[str]]:

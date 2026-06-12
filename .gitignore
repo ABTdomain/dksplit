@@ -29,4 +29,7 @@ Thumbs.db
 *.whl
 *.tar.gz
 
+# Docs build
+docs/_build/
+
 .claude

@@ -1,6 +1,6 @@
 # DKSplit
 
-**Version: 1.0.0**
+**Version: 1.0.2**
 
 String segmentation using BiLSTM-CRF. Splits concatenated words into meaningful parts.
 
@@ -10,11 +10,12 @@ DKSplit is developed by [ABTdomain](https://ABTdomain.com), originally built for
 
 The model is trained on millions of labeled samples covering domain names, brand names, tech terms, and multi-language phrases. It uses a BiLSTM-CRF architecture (384 embedding, 768 hidden, 3 layers) and is exported to ONNX format with INT8 quantization for fast, lightweight inference.
 
-Originally designed for domain name segmentation, but works well on:
+Built for domain names; also strong on other web-style concatenated strings:
 
 - Brand names: `chatgptlogin` → `chatgpt login`
 - Tech terms: `kubernetescluster` → `kubernetes cluster`
 - Multi-language phrases: `mercibeaucoup` → `merci beaucoup`
+- Hashtags (strip `#` first): `machinelearning` → `machine learning`
 
 ## Install
 ```bash
@@ -33,7 +34,7 @@ dksplit.split("chatgptlogin")
 dksplit.split_batch(["openaikey", "microsoftoffice"])
 # [['openai', 'key'], ['microsoft', 'office']]
 
-# Top-k candidates (v0.4.0+): split3 / split5 / split_topk
+# Top-k candidates: split3 / split5 / split_topk
 dksplit.split3("noranite")        # top-3 candidates, best first
 # [['nora', 'nite'], ['noranite'], ['nor', 'anite']]
 
@@ -50,11 +51,12 @@ dksplit.split_topk("chatgptlogin", k=3)   # any k
 
 ## Features
 
-- **High-Fidelity Segmentation:** 95%+ accuracy on diverse inputs
+- **Benchmarked, not vibes:** 86.5% strict / 91.5% lenient EM on the public
+  1,000-sample domain benchmark
 - **Robust Brand/Phrase Handling:** Modern brand names and multi-language phrases
-- **Top-k Candidates:** `split3` / `split5` / `split_topk` return ranked alternative segmentations (v0.4.0+)
+- **Top-k Candidates:** `split3` / `split5` / `split_topk` return ranked alternative segmentations
 - INT8 quantized, 9MB model size
-- ~800/s single, ~1700/s batch
+- ~800/s single, ~1000/s batch (~1700/s with `exact=False`)
 
 ## Requirements
 

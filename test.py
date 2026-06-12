@@ -2,6 +2,7 @@
 DKSplit test script
 """
 
+import random
 import time
 import dksplit
 from dksplit import Splitter
@@ -94,6 +95,48 @@ print(f"\n  rank-1 == split(): {'OK' if ok else 'MISMATCH'}")
 for text in ["", "a", "ab"]:
     result = dksplit.split3(text)
     print(f"  {repr(text):<30} -> {result}")
+
+# Test 6: split_batch must return the same results as split(), for any
+# batch size and batch composition
+print("\n[Test 6] Batch parity (split_batch == split)")
+print("-" * 40)
+
+# Pairs that are sensitive to batch composition under whole-batch inference
+flip_pairs = [
+    ("lollapalooza", "bengalsweets"),
+    ("nirbhaya", "pixel3xl"),
+    ("engice", "santri"),
+    ("karabag", "kuznets"),
+    ("gridx", "fuzzy"),
+    ("passwd", "outpos"),
+    ("w64", "ttx"),
+    ("invoker", "mutator"),
+    ("timezone", "identity"),
+    ("timestamps", "allresults"),
+    ("backspace", "workspace"),
+    ("curdate", "related"),
+]
+for a, b in flip_pairs:
+    assert dksplit.split_batch([a, b])[0] == dksplit.split(a), \
+        f"batch parity broken for {a!r} paired with {b!r}"
+print(f"  {len(flip_pairs)} batch-sensitive pairs: OK")
+
+# Property: split_batch must equal per-item split for any batch composition
+rng = random.Random(42)
+alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+corpus = ["".join(rng.choice(alphabet) for _ in range(rng.randint(1, 64)))
+          for _ in range(300)]
+expected = [dksplit.split(t) for t in corpus]
+for bs in (1, 2, 17, 256):
+    got = dksplit.split_batch(corpus, batch_size=bs)
+    n_bad = sum(1 for e, g in zip(expected, got) if e != g)
+    assert n_bad == 0, f"{n_bad} parity mismatches at batch_size={bs}"
+    print(f"  300 random strings, batch_size={bs:>3}: OK")
+
+# exact=False keeps the fast approximate path available and well-formed
+approx = dksplit.split_batch(corpus, exact=False)
+assert all("".join(toks) == t for t, toks in zip(corpus, approx))
+print("  exact=False fast path: output well-formed")
 
 print("\n" + "=" * 60)
 print("Done!")
