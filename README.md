@@ -53,10 +53,6 @@ behavior.
 
 ## Benchmark
 
-> Measured on the released PyPI package. Methodology changed in v1.0.0, so
-> earlier published numbers are not comparable
-> ([details](https://abtdomain.com/blog/2026/04/dksplit-update-cleaner-benchmark-first-deberta-run-different-failure-modes/)).
-
 ### Dataset
 
 1,000 hand-audited domain prefixes drawn from the
