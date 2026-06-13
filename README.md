@@ -173,5 +173,5 @@ The model was trained on the
 [Leonardo Booster](https://www.hpc.cineca.it/systems/hardware/leonardo/)
 supercomputer at CINECA, Italy, with computing resources provided by the
 [EuroHPC Joint Undertaking](https://eurohpc-ju.europa.eu/) through the
-Playground Access program (project AIFAC_P02_281). We thank EuroHPC JU for
+Playground Access program (EHPC-AIF-2026PG01-281). We thank EuroHPC JU for
 enabling SMEs to explore new possibilities with world-class HPC infrastructure.
