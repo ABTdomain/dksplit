@@ -154,6 +154,7 @@ failure-mode comparisons (dictionary segmenters, DeBERTa-V3, LLMs):
 
 ## Links
 
+- Read more About DKsplit: [DKsplit on EuroHPC](https://ABtdomain.com/blog/tag/eurohpc)
 - Website: [domainkits.com](https://domainkits.com), [ABTdomain.com](https://ABTdomain.com)
 - PyPI: [pypi.org/project/dksplit](https://pypi.org/project/dksplit)
 - Hugging Face (LLM variant): [ABTdomain/dksplit-qwen-lora](https://huggingface.co/ABTdomain/dksplit-qwen-lora)
